@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号申请 - 挂科预警系统</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1F2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .form-focus {
+                @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
+            }
+            .btn-primary {
+                @apply bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0;
+            }
+            .input-field {
+                @apply w-full px-4 py-3 border border-gray-300 rounded-lg form-focus transition-all duration-200;
+            }
+            .step-active {
+                @apply bg-primary text-white border-primary;
+            }
+            .step-completed {
+                @apply bg-secondary text-white border-secondary;
+            }
+            .step-pending {
+                @apply bg-gray-100 text-gray-400 border-gray-200;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-exclamation-triangle text-warning text-2xl"></i>
+                <h1 class="text-xl font-bold text-primary">挂科预警系统</h1>
+            </div>
+            <div>
+                <a href="D:\cvscs\hello.html" class="text-gray-600 hover:text-primary transition-colors flex items-center">
+                    <i class="fa fa-sign-in mr-1"></i>
+                    <span>已有账号？登录</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="container mx-auto px-4 py-8 md:py-12">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-10">
+                <h2 class="text-[clamp(1.5rem,3vw,2.2rem)] font-bold mb-3">账号申请</h2>
+                <p class="text-gray-600 max-w-xl mx-auto">请填写以下信息申请系统账号，提交后将由管理员审核，审核通过后将通过校园邮箱发送账号信息</p>
+            </div>
+            
+            <!-- 步骤指示器 -->
+            <div class="flex items-center justify-between mb-10 relative">
+                <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
+                <div class="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 z-10 transition-all duration-500" id="progressBar" style="width: 33%"></div>
+                
+                <div class="relative z-20 flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full border-2 step-active flex items-center justify-center mb-2">
+                        <i class="fa fa-user"></i>
+                    </div>
+                    <span class="text-sm font-medium">基本信息</span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full border-2 step-pending flex items-center justify-center mb-2">
+                        <span>2</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">验证信息</span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col items-center">
+                    <div class="w-10 h-10 rounded-full border-2 step-pending flex items-center justify-center mb-2">
+                        <span>3</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">提交申请</span>
+                </div>
+            </div>
+            
+            <!-- 表单容器 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-8">
+                <!-- 步骤1：基本信息 -->
+                <div id="step1" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="studentId" class="block text-sm font-medium text-gray-700 mb-1">学号 <span class="text-danger">*</span></label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fa fa-id-card-o"></i>
+                                </div>
+                                <input type="text" id="studentId" class="input-field pl-10" placeholder="请输入学号" required>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">请输入你的学号，如：2021001</p>
+                        </div>
+                        
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">姓名 <span class="text-danger">*</span></label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fa fa-user"></i>
+                                </div>
+                                <input type="text" id="name" class="input-field pl-10" placeholder="请输入姓名" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">校园邮箱 <span class="text-danger">*</span></label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fa fa-envelope-o"></i>
+                            </div>
+                            <input type="email" id="email" class="input-field pl-10" placeholder="请输入校园邮箱" required>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">账号信息将发送至该邮箱</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="college" class="block text-sm font-medium text-gray-700 mb-1">学院 <span class="text-danger">*</span></label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fa fa-building-o"></i>
+                                </div>
+                                <select id="college" class="input-field pl-10" required>
+                                    <option value="">请选择学院</option>
+                                    <option value="计算机学院">计算机学院</option>
+                                    <option value="电子信息学院">电子信息学院</option>
+                                    <option value="数学学院">数学学院</option>
+                                    <option value="物理学院">物理学院</option>
+                                    <option value="文学院">文学院</option>
+                                    <option value="外国语学院">外国语学院</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="major" class="block text-sm font-medium text-gray-700 mb-1">专业 <span class="text-danger">*</span></label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fa fa-graduation-cap"></i>
+                                </div>
+                                <input type="text" id="major" class="input-field pl-10" placeholder="请输入专业" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="grade" class="block text-sm font-medium text-gray-700 mb-1">年级 <span class="text-danger">*</span></label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fa fa-calendar"></i>
+                                </div>
+                                <select id="grade" class="input-field pl-10" required>
+                                    <option value="">请选择年级</option>
+                                    <option value="2020">2020级</option>
+                                    <option value="2021">2021级</option>
+                                    <option value="2022">2022级</option>
+                                    <option value="2023">2023级</option>
+                                    <option value="2024">2024级</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="class" class="block text-sm font-medium text-gray-700 mb-1">班级 <span class="text-danger">*</span></label>
+                            <div class="relative">
+                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <i class="fa fa-users"></i>
+                                </div>
+                                <input type="text" id="class" class="input-field pl-10" placeholder="请输入班级" required>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">如：计算机科学与技术1班</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end pt-4">
+                        <button id="toStep2" class="btn-primary px-8">
+                            下一步 <i class="fa fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 步骤2：验证信息 -->
+                <div id="step2" class="space-y-6 hidden">
+                    <div class="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fa fa-info-circle text-primary mt-1 mr-3"></i>
+                            <p class="text-sm">请输入你的个人验证信息，用于核实身份。信息将严格保密，仅用于账号审核。</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="idCard" class="block text-sm font-medium text-gray-700 mb-1">身份证号 <span class="text-danger">*</span></label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fa fa-id-card"></i>
+                            </div>
+                            <input type="text" id="idCard" class="input-field pl-10" placeholder="请输入身份证号" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">手机号码 <span class="text-danger">*</span></label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fa fa-phone"></i>
+                            </div>
+                            <input type="tel" id="phone" class="input-field pl-10" placeholder="请输入手机号码" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="verifyCode" class="block text-sm font-medium text-gray-700 mb-1">验证码 <span class="text-danger">*</span></label>
+                        <div class="relative flex">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fa fa-shield"></i>
+                            </div>
+                            <input type="text" id="verifyCode" class="input-field pl-10 flex-grow" placeholder="请输入验证码" required>
+                            <button type="button" id="getCodeBtn" class="ml-3 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 rounded-lg transition-colors whitespace-nowrap">
+                                获取验证码
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between pt-4">
+                        <button id="backToStep1" class="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                            <i class="fa fa-arrow-left mr-1"></i> 上一步
+                        </button>
+                        <button id="toStep3" class="btn-primary px-8">
+                            下一步 <i class="fa fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 步骤3：提交申请 -->
+                <div id="step3" class="space-y-6 hidden">
+                    <div class="bg-warning/5 border border-warning/20 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fa fa-lightbulb-o text-warning mt-1 mr-3"></i>
+                            <p class="text-sm">请确认以下信息无误，提交后将在1-3个工作日内完成审核，审核结果将通过校园邮箱通知你。</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 信息确认卡片 -->
+                    <div class="border border-gray-200 rounded-lg p-5 bg-gray-50">
+                        <h4 class="font-medium mb-4 pb-2 border-b border-gray-200">申请信息确认</h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <p class="text-xs text-gray-500">学号</p>
+                                <p class="font-medium" id="confirmId">2021001</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">姓名</p>
+                                <p class="font-medium" id="confirmName">张三</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">学院</p>
+                                <p class="font-medium" id="confirmCollege">计算机学院</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">专业</p>
+                                <p class="font-medium" id="confirmMajor">计算机科学与技术</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">年级</p>
+                                <p class="font-medium" id="confirmGrade">2021级</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">班级</p>
+                                <p class="font-medium" id="confirmClass">1班</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start mt-4">
+                            <input type="checkbox" id="agreeTerms" class="h-4 w-4 text-primary focus:ring-primary/30 border-gray-300 rounded mt-1" required>
+                            <label for="agreeTerms" class="ml-2 block text-sm text-gray-700">
+                                我已阅读并同意<a href="#" class="text-primary hover:underline">《用户服务条款》</a>和<a href="#" class="text-primary hover:underline">《隐私政策》</a>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between pt-4">
+                        <button id="backToStep2" class="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                            <i class="fa fa-arrow-left mr-1"></i> 上一步
+                        </button>
+                        <button id="submitApplication" class="btn-primary px-8">
+                            提交申请 <i class="fa fa-check ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 提交成功 -->
+                <div id="successMessage" class="text-center py-6 hidden">
+                    <div class="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-6">
+                        <i class="fa fa-check text-4xl text-secondary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">申请提交成功！</h3>
+                    <p class="text-gray-600 mb-6 max-w-md mx-auto">你的账号申请已提交，我们将在1-3个工作日内完成审核。审核结果将发送至你的校园邮箱，请留意查收。</p>
+                    <a href="D:\cvscs\hello.html" class="inline-block btn-primary px-8">
+                        返回登录页 <i class="fa fa-sign-in ml-1"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="text-center text-sm text-gray-500">
+                <p>如有疑问，请联系：<a href="mailto:support@school.edu" class="text-primary hover:underline">support@school.edu</a> 或 拨打 010-12345678</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-exclamation-triangle text-warning text-xl"></i>
+                        <h2 class="text-lg font-bold">挂科预警系统</h2>
+                    </div>
+                    <p class="text-gray-400 text-sm">帮助学生及时发现学习风险，提供个性化学习建议，提高学习效率和成绩。</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-base font-semibold mb-4">快速链接</h3>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">首页</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">使用指南</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">常见问题</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">联系我们</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-base font-semibold mb-4">联系我们</h3>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li class="flex items-center">
+                            <i class="fa fa-envelope-o mr-2"></i>
+                            <span>support@school.edu</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-phone mr-2"></i>
+                            <span>010-12345678</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-map-marker mr-2"></i>
+                            <span>教学管理中心 302室</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-500 text-sm">
+                <p>© 2023 学校教学管理系统 版权所有</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // DOM元素
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const successMessage = document.getElementById('successMessage');
+        const progressBar = document.getElementById('progressBar');
+        const steps = [step1, step2, step3];
+        const stepIndicators = document.querySelectorAll('.rounded-full.border-2');
+        
+        // 步骤按钮
+        const toStep2Btn = document.getElementById('toStep2');
+        const backToStep1Btn = document.getElementById('backToStep1');
+        const toStep3Btn = document.getElementById('toStep3');
+        const backToStep2Btn = document.getElementById('backToStep2');
+        const submitBtn = document.getElementById('submitApplication');
+        const getCodeBtn = document.getElementById('getCodeBtn');
+        
+        // 表单数据元素
+        const studentId = document.getElementById('studentId');
+        const name = document.getElementById('name');
+        const college = document.getElementById('college');
+        const major = document.getElementById('major');
+        const grade = document.getElementById('grade');
+        const className = document.getElementById('class');
+        
+        // 确认信息元素
+        const confirmId = document.getElementById('confirmId');
+        const confirmName = document.getElementById('confirmName');
+        const confirmCollege = document.getElementById('confirmCollege');
+        const confirmMajor = document.getElementById('confirmMajor');
+        const confirmGrade = document.getElementById('confirmGrade');
+        const confirmClass = document.getElementById('confirmClass');
+        
+        // 切换到步骤2
+        toStep2Btn.addEventListener('click', function() {
+            // 简单验证
+            if (!validateStep1()) return;
+            
+            switchStep(0, 1);
+            progressBar.style.width = '66%';
+        });
+        
+        // 返回步骤1
+        backToStep1Btn.addEventListener('click', function() {
+            switchStep(1, 0);
+            progressBar.style.width = '33%';
+        });
+        
+        // 切换到步骤3
+        toStep3Btn.addEventListener('click', function() {
+            // 简单验证
+            if (!validateStep2()) return;
+            
+            // 更新确认信息
+            updateConfirmationInfo();
+            
+            switchStep(1, 2);
+            progressBar.style.width = '100%';
+        });
+        
+        // 返回步骤2
+        backToStep2Btn.addEventListener('click', function() {
+            switchStep(2, 1);
+            progressBar.style.width = '66%';
+        });
+        
+        // 提交申请
+        submitBtn.addEventListener('click', function() {
+            if (!document.getElementById('agreeTerms').checked) {
+                alert('请阅读并同意用户服务条款和隐私政策');
+                return;
+            }
+            
+            // 隐藏所有步骤
+            steps.forEach(step => step.classList.add('hidden'));
+            // 显示成功消息
+            successMessage.classList.remove('hidden');
+        });
+        
+        // 获取验证码
+        getCodeBtn.addEventListener('click', function() {
+            const phone = document.getElementById('phone').value;
+            if (!phone || phone.length !== 11) {
+                alert('请输入有效的手机号码');
+                return;
+            }
+            
+            // 倒计时功能
+            let countdown = 60;
+            const originalText = getCodeBtn.innerHTML;
+            getCodeBtn.disabled = true;
+            getCodeBtn.innerHTML = `${countdown}秒后重新获取`;
+            
+            const timer = setInterval(() => {
+                countdown--;
+                getCodeBtn.innerHTML = `${countdown}秒后重新获取`;
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    getCodeBtn.disabled = false;
+                    getCodeBtn.innerHTML = originalText;
+                }
+            }, 1000);
+            
+            // 模拟发送验证码
+            console.log(`向手机号 ${phone} 发送验证码`);
+            alert('验证码已发送，请注意查收');
+        });
+        
+        // 切换步骤的通用函数
+        function switchStep(fromIndex, toIndex) {
+            // 隐藏当前步骤
+            steps[fromIndex].classList.add('hidden');
+            // 重置步骤指示器状态
+            stepIndicators[fromIndex].classList.remove('step-active');
+            stepIndicators[fromIndex].classList.add('step-completed');
+            
+            // 显示目标步骤
+            steps[toIndex].classList.remove('hidden');
+            // 更新步骤指示器状态
+            stepIndicators[toIndex].classList.remove('step-pending');
+            stepIndicators[toIndex].classList.add('step-active');
+        }
+        
+        // 验证步骤1表单
+        function validateStep1() {
+            if (!studentId.value.trim()) {
+                alert('请输入学号');
+                studentId.focus();
+                return false;
+            }
+            
+            if (!name.value.trim()) {
+                alert('请输入姓名');
+                name.focus();
+                return false;
+            }
+            
+            if (!document.getElementById('email').value.trim()) {
+                alert('请输入校园邮箱');
+                document.getElementById('email').focus();
+                return false;
+            }
+            
+            if (!college.value) {
+                alert('请选择学院');
+                college.focus();
+                return false;
+            }
+            
+            if (!major.value.trim()) {
+                alert('请输入专业');
+                major.focus();
+                return false;
+            }
+            
+            if (!grade.value) {
+                alert('请选择年级');
+                grade.focus();
+                return false;
+            }
+            
+            if (!className.value.trim()) {
+                alert('请输入班级');
+                className.focus();
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 验证步骤2表单
+        function validateStep2() {
+            const idCard = document.getElementById('idCard').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const verifyCode = document.getElementById('verifyCode').value.trim();
+            
+            if (!idCard) {
+                alert('请输入身份证号');
+                document.getElementById('idCard').focus();
+                return false;
+            }
+            
+            if (!phone || phone.length !== 11) {
+                alert('请输入有效的手机号码');
+                document.getElementById('phone').focus();
+                return false;
+            }
+            
+            if (!verifyCode || verifyCode.length !== 6) {
+                alert('请输入6位验证码');
+                document.getElementById('verifyCode').focus();
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 更新确认信息
+        function updateConfirmationInfo() {
+            confirmId.textContent = studentId.value.trim();
+            confirmName.textContent = name.value.trim();
+            confirmCollege.textContent = college.options[college.selectedIndex].text;
+            confirmMajor.textContent = major.value.trim();
+            confirmGrade.textContent = grade.value + '级';
+            confirmClass.textContent = className.value.trim();
+        }
+    </script>
+</body>
+</html>

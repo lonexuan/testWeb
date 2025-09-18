@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挂科预警系统</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1F2937',
+                        light: '#F3F4F6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .progress-animation {
+                transition: width 1s ease-in-out;
+            }
+            .form-focus {
+                @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
+            }
+            .btn-primary {
+                @apply bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0;
+            }
+            .input-field {
+                @apply w-full px-4 py-3 border border-gray-300 rounded-lg form-focus transition-all duration-200;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark overflow-x-hidden">
+    <!-- 登录页面 -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4 transition-opacity duration-500">
+        <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 左侧图片区域 -->
+            <div class="hidden md:block relative rounded-2xl overflow-hidden h-[500px]">
+                <div class="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary/70 z-10"></div>
+                <img src="https://picsum.photos/id/20/800/1000" alt="学生学习场景" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 z-20 flex flex-col justify-center p-10 text-white">
+                    <div class="flex items-center space-x-2 mb-8">
+                        <i class="fa fa-exclamation-triangle text-3xl"></i>
+                        <h2 class="text-3xl font-bold">挂科预警系统</h2>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">智能监控你的学习状态</h3>
+                    <p class="mb-6 opacity-90">及时发现学习风险，提供个性化学习建议，助你顺利完成学业</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <i class="fa fa-check-circle mt-1 mr-3 text-lg"></i>
+                            <p>实时跟踪课程成绩和学习进度</p>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa fa-check-circle mt-1 mr-3 text-lg"></i>
+                            <p>智能分析潜在挂科风险</p>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa fa-check-circle mt-1 mr-3 text-lg"></i>
+                            <p>提供针对性学习资源和提升方案</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧登录表单 -->
+            <div class="bg-white rounded-2xl p-8 md:p-10 card-shadow flex flex-col justify-center">
+                <div class="md:hidden flex items-center space-x-2 mb-6">
+                    <i class="fa fa-exclamation-triangle text-warning text-2xl"></i>
+                    <h2 class="text-2xl font-bold text-primary">挂科预警系统</h2>
+                </div>
+                <h3 class="text-2xl font-bold mb-6">欢迎登录</h3>
+                <p class="text-gray-500 mb-8">请输入你的账号信息以继续</p>
+                
+                <form id="loginForm" class="space-y-5">
+                    <div>
+                        <label for="studentId" class="block text-sm font-medium text-gray-700 mb-1">学号</label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fa fa-id-card-o"></i>
+                            </div>
+                            <input type="text" id="studentId" class="input-field pl-10" placeholder="请输入学号" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fa fa-lock"></i>
+                            </div>
+                            <input type="password" id="password" class="input-field pl-10" placeholder="请输入密码" required>
+                            <button type="button" id="togglePassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fa fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="rememberMe" class="h-4 w-4 text-primary focus:ring-primary/30 border-gray-300 rounded">
+                            <label for="rememberMe" class="ml-2 block text-sm text-gray-700">记住我</label>
+                        </div>
+                        <a href="#" class="text-sm text-primary hover:text-primary/80 transition-colors">忘记密码?</a>
+                    </div>
+                    
+                    <button type="submit" class="w-full btn-primary">
+                        登录系统
+                    </button>
+                    
+                    <div class="text-center text-sm text-gray-500">
+                        还没有账号? <a href="D:\cvscs\hello2.html" class="text-primary hover:text-primary/80 transition-colors">联系管理员开通</a>
+                    </div>
+                </form>
+                
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <p class="text-sm text-gray-500 text-center">
+                        登录即表示你同意我们的 <a href="#" class="text-primary hover:underline">服务条款</a> 和 <a href="#" class="text-primary hover:underline">隐私政策</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用内容 (默认隐藏) -->
+    <div id="appContent" class="hidden">
+        <!-- 导航栏 -->
+        <nav class="bg-white shadow-md fixed w-full z-10 transition-all duration-300" id="navbar">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa fa-exclamation-triangle text-warning text-2xl"></i>
+                    <h1 class="text-xl font-bold text-primary">挂科预警系统</h1>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#dashboard" class="hover:text-primary transition-colors duration-200">仪表盘</a>
+                    <a href="#courses" class="hover:text-primary transition-colors duration-200">我的课程</a>
+                    <a href="#analysis" class="hover:text-primary transition-colors duration-200">成绩分析</a>
+                    <a href="#advice" class="hover:text-primary transition-colors duration-200">提升建议</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:block">
+                        <span class="text-sm text-gray-600" id="usernameDisplay">张三</span>
+                    </div>
+                    <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <i class="fa fa-user text-primary"></i>
+                    </div>
+                    <button class="md:hidden text-gray-600" id="menuToggle">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                    <button id="logoutBtn" class="hidden md:flex items-center text-gray-600 hover:text-danger transition-colors">
+                        <i class="fa fa-sign-out mr-1"></i>
+                        <span>退出</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 移动端菜单 -->
+            <div class="md:hidden hidden bg-white border-t" id="mobileMenu">
+                <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                    <a href="#dashboard" class="py-2 hover:text-primary transition-colors duration-200">仪表盘</a>
+                    <a href="#courses" class="py-2 hover:text-primary transition-colors duration-200">我的课程</a>
+                    <a href="#analysis" class="py-2 hover:text-primary transition-colors duration-200">成绩分析</a>
+                    <a href="#advice" class="py-2 hover:text-primary transition-colors duration-200">提升建议</a>
+                    <a href="#" class="py-2 text-gray-600 hover:text-primary transition-colors duration-200">个人设置</a>
+                    <a href="#" id="mobileLogout" class="py-2 text-danger hover:text-danger/80 transition-colors duration-200">退出登录</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容 -->
+        <main class="container mx-auto px-4 pt-24 pb-16">
+            <!-- 仪表盘部分 -->
+            <section id="dashboard" class="mb-16">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                    <div>
+                        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-2">学习仪表盘</h2>
+                        <p class="text-gray-600">实时监控你的学习状态和挂科风险</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 bg-white rounded-lg shadow-sm px-4 py-2 flex items-center">
+                        <i class="fa fa-calendar-o text-primary mr-2"></i>
+                        <span>2023-2024学年 第二学期</span>
+                    </div>
+                </div>
+                
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl p-6 card-shadow transform hover:-translate-y-1 transition-transform duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">总课程数</p>
+                                <h3 class="text-3xl font-bold mt-1">8</h3>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <i class="fa fa-book text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <span class="text-secondary flex items-center">
+                                <i class="fa fa-arrow-up mr-1"></i>2门
+                            </span>
+                            <span class="text-gray-500 ml-2">相比上学期</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow transform hover:-translate-y-1 transition-transform duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">预警课程</p>
+                                <h3 class="text-3xl font-bold mt-1 text-danger">3</h3>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-danger/10 flex items-center justify-center">
+                                <i class="fa fa-exclamation-circle text-danger"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <span class="text-danger flex items-center">
+                                <i class="fa fa-arrow-up mr-1"></i>1门
+                            </span>
+                            <span class="text-gray-500 ml-2">相比上月</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow transform hover:-translate-y-1 transition-transform duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">平均出勤率</p>
+                                <h3 class="text-3xl font-bold mt-1">78%</h3>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center">
+                                <i class="fa fa-calendar-check-o text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <span class="text-danger flex items-center">
+                                <i class="fa fa-arrow-down mr-1"></i>5%
+                            </span>
+                            <span class="text-gray-500 ml-2">相比上月</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow transform hover:-translate-y-1 transition-transform duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">平均成绩</p>
+                                <h3 class="text-3xl font-bold mt-1">68</h3>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                                <i class="fa fa-line-chart text-secondary"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <span class="text-secondary flex items-center">
+                                <i class="fa fa-arrow-up mr-1"></i>3分
+                            </span>
+                            <span class="text-gray-500 ml-2">相比上学期</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 风险概览 -->
+                <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">挂科风险概览</h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-primary text-white rounded-full">本月</button>
+                            <button class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">学期</button>
+                        </div>
+                    </div>
+                    
+                    <div class="h-64">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 课程列表部分 -->
+            <section id="courses" class="mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">我的课程</h2>
+                
+                <div class="bg-white rounded-xl p-6 card-shadow overflow-hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                        <p class="text-gray-600 mb-4 md:mb-0">显示所有课程的当前状态和风险等级</p>
+                        <div class="flex space-x-2 w-full md:w-auto">
+                            <div class="relative flex-grow md:flex-grow-0">
+                                <input type="text" placeholder="搜索课程..." class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <select class="border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                <option>所有风险</option>
+                                <option>高风险</option>
+                                <option>中风险</option>
+                                <option>低风险</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[640px]">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-4 px-4 font-semibold">课程名称</th>
+                                    <th class="text-left py-4 px-4 font-semibold">学分</th>
+                                    <th class="text-left py-4 px-4 font-semibold">当前成绩</th>
+                                    <th class="text-left py-4 px-4 font-semibold">出勤率</th>
+                                    <th class="text-left py-4 px-4 font-semibold">挂科风险</th>
+                                    <th class="text-left py-4 px-4 font-semibold">最后更新</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center">
+                                            <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                                <i class="fa fa-calculator text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium">高等数学</p>
+                                                <p class="text-sm text-gray-500">王教授</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">5</td>
+                                    <td class="py-4 px-4">58</td>
+                                    <td class="py-4 px-4">65%</td>
+                                    <td class="py-4 px-4">
+                                        <span class="px-2 py-1 text-xs bg-danger/10 text-danger rounded-full">高风险</span>
+                                    </td>
+                                    <td class="py-4 px-4 text-sm text-gray-500">2023-06-15</td>
+                                </tr>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center">
+                                            <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                                <i class="fa fa-code text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium">数据结构</p>
+                                                <p class="text-sm text-gray-500">李教授</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">4</td>
+                                    <td class="py-4 px-4">62</td>
+                                    <td class="py-4 px-4">78%</td>
+                                    <td class="py-4 px-4">
+                                        <span class="px-2 py-1 text-xs bg-warning/10 text-warning rounded-full">中风险</span>
+                                    </td>
+                                    <td class="py-4 px-4 text-sm text-gray-500">2023-06-18</td>
+                                </tr>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center">
+                                            <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                                <i class="fa fa-database text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium">数据库原理</p>
+                                                <p class="text-sm text-gray-500">张教授</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">4</td>
+                                    <td class="py-4 px-4">55</td>
+                                    <td class="py-4 px-4">60%</td>
+                                    <td class="py-4 px-4">
+                                        <span class="px-2 py-1 text-xs bg-danger/10 text-danger rounded-full">高风险</span>
+                                    </td>
+                                    <td class="py-4 px-4 text-sm text-gray-500">2023-06-17</td>
+                                </tr>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center">
+                                            <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                                <i class="fa fa-globe text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium">大学英语</p>
+                                                <p class="text-sm text-gray-500">刘教授</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">3</td>
+                                    <td class="py-4 px-4">76</td>
+                                    <td class="py-4 px-4">92%</td>
+                                    <td class="py-4 px-4">
+                                        <span class="px-2 py-1 text-xs bg-secondary/10 text-secondary rounded-full">低风险</span>
+                                    </td>
+                                    <td class="py-4 px-4 text-sm text-gray-500">2023-06-14</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center">
+                                            <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                                <i class="fa fa-microchip text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium">计算机组成原理</p>
+                                                <p class="text-sm text-gray-500">赵教授</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">4</td>
+                                    <td class="py-4 px-4">59</td>
+                                    <td class="py-4 px-4">70%</td>
+                                    <td class="py-4 px-4">
+                                        <span class="px-2 py-1 text-xs bg-danger/10 text-danger rounded-full">高风险</span>
+                                    </td>
+                                    <td class="py-4 px-4 text-sm text-gray-500">2023-06-19</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-6">
+                        <p class="text-sm text-gray-500">显示 1 至 5，共 8 条</p>
+                        <div class="flex space-x-1">
+                            <button class="h-8 w-8 flex items-center justify-center rounded border border-gray-200 text-gray-400">
+                                <i class="fa fa-chevron-left text-xs"></i>
+                            </button>
+                            <button class="h-8 w-8 flex items-center justify-center rounded bg-primary text-white">1</button>
+                            <button class="h-8 w-8 flex items-center justify-center rounded border border-gray-200 hover:border-primary hover:text-primary transition-colors">2</button>
+                            <button class="h-8 w-8 flex items-center justify-center rounded border border-gray-200 text-gray-400">
+                                <i class="fa fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 成绩分析部分 -->
+            <section id="analysis" class="mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">成绩分析</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl p-6 card-shadow lg:col-span-2">
+                        <h3 class="text-xl font-bold mb-4">课程成绩趋势</h3>
+                        <div class="h-80">
+                            <canvas id="gradesTrendChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h3 class="text-xl font-bold mb-4">成绩分布</h3>
+                        <div class="h-80 flex items-center justify-center">
+                            <canvas id="gradesDistributionChart"></canvas>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="flex items-center">
+                                <div class="h-3 w-3 rounded-full bg-danger mr-2"></div>
+                                <span class="text-sm">不及格 (&lt;60)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="h-3 w-3 rounded-full bg-warning mr-2"></div>
+                                <span class="text-sm">及格 (60-70)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="h-3 w-3 rounded-full bg-primary mr-2"></div>
+                                <span class="text-sm">良好 (70-85)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="h-3 w-3 rounded-full bg-secondary mr-2"></div>
+                                <span class="text-sm">优秀 (&gt;85)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 评估详情 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h3 class="text-xl font-bold mb-4">考核项完成情况</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-medium">作业完成度</span>
+                                    <span class="text-sm text-gray-500">65%</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full progress-animation" style="width: 65%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-medium">课堂参与度</span>
+                                    <span class="text-sm text-gray-500">72%</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full progress-animation" style="width: 72%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-medium">测验完成度</span>
+                                    <span class="text-sm text-gray-500">58%</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-warning rounded-full progress-animation" style="width: 58%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-medium">实验报告</span>
+                                    <span class="text-sm text-gray-500">80%</span>
+                                </div>
+                                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full progress-animation" style="width: 80%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 card-shadow">
+                        <h3 class="text-xl font-bold mb-4">与班级平均对比</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fa fa-calculator text-primary"></i>
+                                    </div>
+                                    <span>高等数学</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-danger mr-2">-12分</span>
+                                    <i class="fa fa-arrow-down text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fa fa-code text-primary"></i>
+                                    </div>
+                                    <span>数据结构</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-danger mr-2">-8分</span>
+                                    <i class="fa fa-arrow-down text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fa fa-database text-primary"></i>
+                                    </div>
+                                    <span>数据库原理</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-danger mr-2">-15分</span>
+                                    <i class="fa fa-arrow-down text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fa fa-globe text-primary"></i>
+                                    </div>
+                                    <span>大学英语</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-secondary mr-2">+5分</span>
+                                    <i class="fa fa-arrow-up text-secondary"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fa fa-microchip text-primary"></i>
+                                    </div>
+                                    <span>计算机组成原理</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-danger mr-2">-10分</span>
+                                    <i class="fa fa-arrow-down text-danger"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 提升建议部分 -->
+            <section id="advice">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-6">提升建议</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 高风险课程建议 -->
+                    <div class="bg-white rounded-xl overflow-hidden card-shadow">
+                        <div class="bg-danger/10 px-6 py-4 border-b border-danger/20">
+                            <h3 class="text-lg font-bold text-danger flex items-center">
+                                <i class="fa fa-exclamation-circle mr-2"></i>高风险课程提升计划
+                            </h3>
+                        </div>
+                        <div class="p-6">
+                            <h4 class="font-bold mb-3">高等数学</h4>
+                            <ul class="space-y-3 mb-6">
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <span class="text-sm">参加每周的数学辅导课，每周至少2次</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <span class="text-sm">完成近5年的考试真题，重点攻克薄弱章节</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <span class="text-sm">组建3-4人的学习小组，每周讨论一次难题</span>
+                                </li>
+                            </ul>
+                            
+                            <h4 class="font-bold mb-3">数据库原理</h4>
+                            <ul class="space-y-3 mb-6">
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <span class="text-sm">重做所有实验，确保理解每个操作的原理</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fa fa-check-circle text-secondary mt-1 mr-2"></i>
+                                    <span class="text-sm">预约张教授的答疑时间，解决核心概念问题</span>
+                                </li>
+                            </ul>
+                            
+                            <button class="w-full py-2 bg-danger/10 text-danger rounded-lg hover:bg-danger/20 transition-colors mt-4">
+                                查看完整计划
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 学习资源 -->
+                    <div class="bg-white rounded-xl overflow-hidden card-shadow">
+                        <div class="bg-primary/10 px-6 py-4 border-b border-primary/20">
+                            <h3 class="text-lg font-bold text-primary flex items-center">
+                                <i class="fa fa-book mr-2"></i>推荐学习资源
+                            </h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer">
+                                    <div class="h-12 w-12 bg-primary/10 rounded flex items-center justify-center mr-3 flex-shrink-0">
+                                        <i class="fa fa-video-camera text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-sm">高等数学极限专题讲解</h4>
+                                        <p class="text-xs text-gray-500 mt-1">35分钟 · 李教授</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer">
+                                    <div class="h-12 w-12 bg-primary/10 rounded flex items-center justify-center mr-3 flex-shrink-0">
+                                        <i class="fa fa-file-pdf-o text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-sm">数据库原理习题集及答案</h4>
+                                        <p class="text-xs text-gray-500 mt-1">张教授编写 · 2023版</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer">
+                                    <div class="h-12 w-12 bg-primary/10 rounded flex items-center justify-center mr-3 flex-shrink-0">
+                                        <i class="fa fa-users text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-sm">计算机组成原理学习小组</h4>
+                                        <p class="text-xs text-gray-500 mt-1">12名成员 · 每周三晚活动</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start p-3 border border-gray-100 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer">
+                                    <div class="h-12 w-12 bg-primary/10 rounded flex items-center justify-center mr-3 flex-shrink-0">
+                                        <i class="fa fa-laptop text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-sm">数据结构在线模拟实验平台</h4>
+                                        <p class="text-xs text-gray-500 mt-1">包含15个互动实验</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="w-full py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors mt-4">
+                                浏览更多资源
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 时间管理 -->
+                    <div class="bg-white rounded-xl overflow-hidden card-shadow">
+                        <div class="bg-warning/10 px-6 py-4 border-b border-warning/20">
+                            <h3 class="text-lg font-bold text-warning flex items-center">
+                                <i class="fa fa-calendar mr-2"></i>学习时间规划
+                            </h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h4 class="font-medium">每日学习建议时长</h4>
+                                    <span class="text-sm bg-warning/10 text-warning px-2 py-1 rounded-full">3.5小时</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-warning rounded-full progress-animation" style="width: 65%"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">当前完成：2.3小时/天</p>
+                            </div>
+                            
+                            <h4 class="font-bold mb-3">重点课程分配</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        <div class="h-3 w-3 rounded-full bg-danger mr-2"></div>
+                                        <span class="text-sm">高等数学</span>
+                                    </div>
+                                    <span class="text-sm">1.5小时/天</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        <div class="h-3 w-3 rounded-full bg-danger mr-2"></div>
+                                        <span class="text-sm">数据库原理</span>
+                                    </div>
+                                    <span class="text-sm">1小时/天</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        <div class="h-3 w-3 rounded-full bg-danger mr-2"></div>
+                                        <span class="text-sm">计算机组成原理</span>
+                                    </div>
+                                    <span class="text-sm">1小时/天</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 p-3 bg-secondary/10 rounded-lg border border-secondary/20">
+                                <div class="flex items-start">
+                                    <i class="fa fa-lightbulb-o text-secondary mt-1 mr-2"></i>
+                                    <p class="text-sm">周末建议参加学校组织的集中辅导，可大幅提高学习效率</p>
+                                </div>
+                            </div>
+                            
+                            <button class="w-full py-2 bg-warning/10 text-warning rounded-lg hover:bg-warning/20 transition-colors mt-4">
+                                生成个性化计划
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- 页脚 -->
+        <footer class="bg-dark text-white py-12">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <i class="fa fa-exclamation-triangle text-warning text-2xl"></i>
+                            <h2 class="text-xl font-bold">挂科预警系统</h2>
+                        </div>
+                        <p class="text-gray-400 text-sm">帮助学生及时发现学习风险，提供个性化学习建议，提高学习效率和成绩。</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">快速链接</h3>
+                        <ul class="space-y-2 text-gray-400 text-sm">
+                            <li><a href="#" class="hover:text-white transition-colors">首页</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">课程管理</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">成绩分析</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">学习资源</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">帮助中心</h3>
+                        <ul class="space-y-2 text-gray-400 text-sm">
+                            <li><a href="#" class="hover:text-white transition-colors">使用指南</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">常见问题</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">联系我们</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">反馈建议</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">联系我们</h3>
+                        <ul class="space-y-2 text-gray-400 text-sm">
+                            <li class="flex items-center">
+                                <i class="fa fa-envelope-o mr-2"></i>
+                                <span>support@school.edu</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-phone mr-2"></i>
+                                <span>010-12345678</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fa fa-map-marker mr-2"></i>
+                                <span>教学管理中心 302室</span>
+                            </li>
+                        </ul>
+                        <div class="flex space-x-4 mt-4">
+                            <a href="#" class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                                <i class="fa fa-weixin"></i>
+                            </a>
+                            <a href="#" class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                                <i class="fa fa-weibo"></i>
+                            </a>
+                            <a href="#" class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
+                                <i class="fa fa-qq"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-500 text-sm">
+                    <p>© 2023 学校教学管理系统 版权所有</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- 登录成功提示框 (默认隐藏) -->
+    <div id="successToast" class="fixed top-4 right-4 bg-secondary text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-500 flex items-center z-50">
+        <i class="fa fa-check-circle mr-2"></i>
+        <span>登录成功，欢迎回来！</span>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // DOM元素
+        const loginPage = document.getElementById('loginPage');
+        const appContent = document.getElementById('appContent');
+        const loginForm = document.getElementById('loginForm');
+        const studentIdInput = document.getElementById('studentId');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const successToast = document.getElementById('successToast');
+        const usernameDisplay = document.getElementById('usernameDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const mobileLogout = document.getElementById('mobileLogout');
+        
+        // 登录表单提交
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const studentId = studentIdInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            // 简单验证
+            if (!studentId || !password) {
+                alert('请输入学号和密码');
+                return;
+            }
+            
+            // 模拟登录过程
+            simulateLogin(studentId, password);
+        });
+        
+        // 模拟登录
+        function simulateLogin(studentId, password) {
+            // 显示加载状态
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>登录中...';
+            
+            // 模拟API请求延迟
+            setTimeout(() => {
+                // 简单验证逻辑 (实际应用中应与后端交互)
+                if (studentId === '2021001' && password === '123456') {
+                    // 登录成功
+                    submitBtn.innerHTML = '<i class="fa fa-check mr-2"></i>登录成功';
+                    
+                    // 显示成功提示
+                    setTimeout(() => {
+                        successToast.classList.remove('translate-x-full');
+                        
+                        // 切换到主应用
+                        setTimeout(() => {
+                            loginPage.style.opacity = '0';
+                            setTimeout(() => {
+                                loginPage.style.display = 'none';
+                                appContent.classList.remove('hidden');
+                                // 更新用户名显示
+                                usernameDisplay.textContent = '张三 (2021001)';
+                                // 初始化图表
+                                initCharts();
+                                // 触发进度条动画
+                                triggerProgressAnimations();
+                            }, 500);
+                        }, 1000);
+                        
+                        // 隐藏提示框
+                        setTimeout(() => {
+                            successToast.classList.add('translate-x-full');
+                        }, 3000);
+                    }, 500);
+                } else {
+                    // 登录失败
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    alert('学号或密码错误，请重试');
+                }
+            }, 1500);
+        }
+        
+        // 密码显示/隐藏切换
+        togglePasswordBtn.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // 切换图标
+            const icon = togglePasswordBtn.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+        
+        // 退出登录功能
+        function logout() {
+            // 显示确认对话框
+            if (confirm('确定要退出登录吗？')) {
+                // 隐藏主应用
+                appContent.classList.add('hidden');
+                // 重置表单
+                loginForm.reset();
+                passwordInput.setAttribute('type', 'password');
+                togglePasswordBtn.querySelector('i').classList.remove('fa-eye');
+                togglePasswordBtn.querySelector('i').classList.add('fa-eye-slash');
+                // 显示登录页面
+                loginPage.style.display = 'flex';
+                setTimeout(() => {
+                    loginPage.style.opacity = '1';
+                }, 100);
+            }
+        }
+        
+        logoutBtn.addEventListener('click', logout);
+        mobileLogout.addEventListener('click', logout);
+        
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('py-2', 'shadow-lg');
+                navbar.classList.remove('py-3', 'shadow-md');
+            } else {
+                navbar.classList.add('py-3', 'shadow-md');
+                navbar.classList.remove('py-2', 'shadow-lg');
+            }
+        });
+        
+        // 移动端菜单切换
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                // 关闭移动菜单（如果打开）
+                document.getElementById('mobileMenu').classList.add('hidden');
+            });
+        });
+        
+        // 初始化图表
+        function initCharts() {
+            // 挂科风险概览图表
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            const riskChart = new Chart(riskCtx, {
+                type: 'line',
+                data: {
+                    labels: ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周', '第7周', '第8周'],
+                    datasets: [
+                        {
+                            label: '高等数学',
+                            data: [30, 35, 45, 50, 48, 55, 60, 58],
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '数据结构',
+                            data: [40, 45, 50, 55, 60, 62, 63, 62],
+                            borderColor: '#F59E0B',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '数据库原理',
+                            data: [35, 40, 45, 50, 45, 50, 52, 55],
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: '当前成绩'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 成绩趋势图表
+            const gradesTrendCtx = document.getElementById('gradesTrendChart').getContext('2d');
+            const gradesTrendChart = new Chart(gradesTrendCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['高等数学', '数据结构', '数据库原理', '大学英语', '计算机组成原理', '操作系统', '计算机网络', '马克思主义原理'],
+                    datasets: [
+                        {
+                            label: '当前成绩',
+                            data: [58, 62, 55, 76, 59, 72, 68, 85],
+                            backgroundColor: [
+                                '#EF4444', '#F59E0B', '#EF4444', '#10B981', 
+                                '#EF4444', '#3B82F6', '#F59E0B', '#10B981'
+                            ],
+                            borderRadius: 6
+                        },
+                        {
+                            label: '班级平均分',
+                            data: [70, 70, 70, 71, 69, 70, 68, 80],
+                            backgroundColor: '#9CA3AF',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: '成绩分数'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 成绩分布图表
+            const distributionCtx = document.getElementById('gradesDistributionChart').getContext('2d');
+            const distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['不及格', '及格', '良好', '优秀'],
+                    datasets: [{
+                        data: [3, 2, 2, 1],
+                        backgroundColor: [
+                            '#EF4444', '#F59E0B', '#3B82F6', '#10B981'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 触发进度条动画
+        function triggerProgressAnimations() {
+            document.querySelectorAll('.progress-animation').forEach(el => {
+                el.style.width = '0';
+                setTimeout(() => {
+                    const targetWidth = el.getAttribute('style').match(/width: (\d+)%/)[1];
+                    el.style.width = targetWidth + '%';
+                }, 300);
+            });
+        }
+    </script>
+</body>
+</html>
